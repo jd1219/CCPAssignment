@@ -6,7 +6,7 @@ package com.mycompany.ccpassignment;
 
 /**
  *
- * @author User
+ * @author FongJunDe
  */
 public class SanityCheck {
     static int planesHandled = 0;

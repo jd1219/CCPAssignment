@@ -6,14 +6,17 @@ package com.mycompany.ccpassignment;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 
 /**
  *
- * @author User
+ * @author FongJunDe
  */
 public class AirTrafficControl implements Runnable{
     final Queue<Plane> QueueList = new LinkedList<>();
+    final BlockingDeque<Plane> tempList = new LinkedBlockingDeque<>();
     private final Airport airport;
     String name;
     
@@ -24,6 +27,13 @@ public class AirTrafficControl implements Runnable{
     
     void handleArrival(Plane plane){
         Logger.log(name, "Checking available gates for " + "Plane " + plane.getId());
+        synchronized (QueueList) {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ex) {
+                java.util.logging.Logger.getLogger(AirTrafficControl.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
         
         synchronized (airport.gates) {
             while (airport.gates.availablePermits() == 0) {
@@ -39,7 +49,7 @@ public class AirTrafficControl implements Runnable{
         Logger.log(name, "Found available gate for Plane " + plane.getId());
         
         synchronized(airport.runway){
-            if(airport.runway.isLocked()){
+            while(airport.runway.isLocked()){
                 Logger.log(name, "Runway is occupied, Plane " + plane.getId()+ " please wait ");
                 try {
                     airport.runway.wait();
@@ -68,7 +78,7 @@ public class AirTrafficControl implements Runnable{
         Logger.log(name,"Checking availability runway for Plane " + plane.getId() + "......");
         
         synchronized(airport.runway){
-            if(airport.runway.isLocked()){
+            while(airport.runway.isLocked()){
                 Logger.log(name,"The Runway is occupied,Plane " + plane.getId() +", please wait!!");
                 try {
                     airport.runway.wait();
@@ -92,10 +102,11 @@ public class AirTrafficControl implements Runnable{
     }
     @Override
     public void run(){
+        Logger.log(name,name + " is ready!!!");
         Plane plane;
         while(true){
             synchronized(QueueList){
-                if(QueueList.isEmpty()){
+                while(QueueList.isEmpty()){
                     try {
                         QueueList.wait();
                     } catch (InterruptedException ex) {
@@ -103,6 +114,7 @@ public class AirTrafficControl implements Runnable{
                     }
                 }
                 plane = QueueList.peek();
+                Logger.log(name,"Plane : " + plane.getId());
             }
             
             if(plane.isArriving.get()){

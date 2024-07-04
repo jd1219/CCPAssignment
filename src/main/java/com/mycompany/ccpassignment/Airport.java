@@ -6,23 +6,22 @@ package com.mycompany.ccpassignment;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
-
-/**
- *
- * @author FongJunDe
- */
+//
+///**
+// *
+// * @author FongJunDe
+// */
 public class Airport {
     final Semaphore gates = new Semaphore(3);
     final ReentrantLock runway = new ReentrantLock();
     final long startTime = System.currentTimeMillis();
     String name;
-    RefuelTruck RTruck;
+    RefuelTruck RTruck = new RefuelTruck("Refuel Truck");
     AirTrafficControlManager ATC_Manager;
     CleaningTeam CTeam;
     
     public Airport(String name){
         this.name = name;
-        this.RTruck = new RefuelTruck("Refuel Truck");
         this.ATC_Manager = new AirTrafficControlManager(this);
         this.CTeam = new CleaningTeam();
     }
@@ -37,10 +36,10 @@ public class Airport {
         // start to count the time
         long systemStart = System.currentTimeMillis();
         
-        Airport TawauAirport = new Airport("Tawau Airport");
-        TawauAirport.startServices();
+        Airport APAirport = new Airport("Asia Pacific Airport");
+        APAirport.startServices();
         
-        GeneratePlane gp = new GeneratePlane(TawauAirport, 6);
+        GeneratePlane gp = new GeneratePlane(APAirport,6);
         Thread pgThread = new Thread(gp);
         pgThread.start();
         

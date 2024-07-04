@@ -6,13 +6,11 @@ package com.mycompany.ccpassignment;
 
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Level;
 
 /**
  *
- * @author User
+ * @author FongJunDe
  */
 public class CleaningTeam implements Runnable{
     final Queue<Plane> QueueList = new LinkedList<>();

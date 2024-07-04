@@ -5,12 +5,13 @@
 package com.mycompany.ccpassignment;
 
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  *
- * @author User
+ * @author FongJunDe
  */
 public class GeneratePlane implements Runnable{
     private final Airport TAirport;
@@ -26,8 +27,14 @@ public class GeneratePlane implements Runnable{
         int i = 1;
         int temp = 6;
         while(i <= temp){
-            Thread plane = new Thread(new Plane(TAirport, i)); 
-            plane.start();
+            // try to assign the sixth plane request to emergency landing
+            if(i == 4){
+                Thread plane = new Thread(new Plane(TAirport, i,true));
+                plane.start();
+            }else{
+                Thread plane = new Thread(new Plane(TAirport, i,false)); 
+                plane.start();
+            }                
             i++;
             try {
                 Thread.sleep(new Random().nextInt(3000));

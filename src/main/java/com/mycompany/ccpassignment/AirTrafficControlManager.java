@@ -9,10 +9,10 @@ import java.util.logging.Level;
 
 /**
  *
- * @author User
+ * @author FongJunDe
  */
 public class AirTrafficControlManager implements Runnable{
-    private final Airport airport;
+    final Airport airport;
     AirTrafficControl ATC_Arrival;
     AirTrafficControl ATC_Departure;
     ArrayList<SanityCheck> statistics = new ArrayList<>();
@@ -22,6 +22,9 @@ public class AirTrafficControlManager implements Runnable{
         this.ATC_Arrival = new AirTrafficControl(airport, "ATC Arrival");
         this.ATC_Departure = new AirTrafficControl(airport, "ATC Departure");
 
+    }
+    
+    public void startServices(){
         new Thread(ATC_Arrival).start();
         new Thread(ATC_Departure).start();
     }
@@ -29,7 +32,7 @@ public class AirTrafficControlManager implements Runnable{
     void RequestLanding(Plane plane){
         synchronized (ATC_Arrival.QueueList) {
             //adding a plane into the queue
-            ATC_Arrival.QueueList.offer(plane);
+                ATC_Arrival.QueueList.offer(plane);
             ATC_Arrival.QueueList.notifyAll();
         }
     }
@@ -44,6 +47,8 @@ public class AirTrafficControlManager implements Runnable{
     
     @Override
     public void run() {
+        startServices();
+        
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -52,7 +57,7 @@ public class AirTrafficControlManager implements Runnable{
         
         while(!ATC_Arrival.QueueList.isEmpty() ||!ATC_Departure.QueueList.isEmpty() || airport.runway.isLocked() || airport.gates.availablePermits() < 3){
             try {
-                Thread.sleep(8000);
+                Thread.sleep(5000);
             } catch (InterruptedException ex) {
                 java.util.logging.Logger.getLogger(AirTrafficControlManager.class.getName()).log(Level.SEVERE, null, ex);
             }

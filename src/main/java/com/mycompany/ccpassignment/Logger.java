@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 
 /**
  *
- * @author User
+ * @author FongJunDe
  */
 public class Logger {
     static void log(String unit, String messages) {

@@ -189,10 +189,10 @@ public class Plane implements Runnable {
         }
 
         //refuel, cleaning, disembark and embark the passengers
-        airport.RTruck.refuelPlane(this);
+        airport.RefuelTruck.refuelPlane(this);
         airport.CTeam.planeCleaning(this);
-//        disembark(this);
-//        embark(this);
+        disembark(this);
+        embark(this);
 
         while (cleanlinessLevel < 100) {
             Logger.log("Plane " + this.planeid, "Plane not cleaned yet, waiting on cleaning......");

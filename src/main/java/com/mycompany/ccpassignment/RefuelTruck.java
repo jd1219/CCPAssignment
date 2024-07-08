@@ -14,7 +14,7 @@ import java.util.logging.Level;
  * @author FongJunDe
  */
 public class RefuelTruck implements Runnable{
-    final Queue<Plane> QueueList = new LinkedList<>();
+    final Queue<Plane> PlaneQueue = new LinkedList<>();
     
     final Semaphore truck = new Semaphore(1);
     String name;
@@ -30,10 +30,10 @@ public class RefuelTruck implements Runnable{
         Logger.log(name, "Refuel Truck is ready...");
         Plane plane = null;
         while(true){
-            synchronized(QueueList){
-                if(QueueList.isEmpty()){
+            synchronized(PlaneQueue){
+                if(PlaneQueue.isEmpty()){
                     try {
-                        QueueList.wait();
+                        PlaneQueue.wait();
                     } catch (InterruptedException ex) {
                         java.util.logging.Logger.getLogger(RefuelTruck.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -41,7 +41,7 @@ public class RefuelTruck implements Runnable{
                 
             }
             
-            plane = QueueList.poll();
+            plane = PlaneQueue.poll();
             
             if(plane != null){
                 synchronized(plane){
@@ -55,7 +55,6 @@ public class RefuelTruck implements Runnable{
                         }
 
                         Logger.log(name, "Refueling for Plane " + plane.getId() + " ... Progress: " + plane.fuelLevel + "%");
-                        Logger.log(name, "Refilling supplies for Plane " + plane.getId() + " ... Progress: " + plane.fuelLevel + "%");
 
                         try {
                             Thread.sleep(300); // Simulate time taken to refuel
@@ -69,6 +68,7 @@ public class RefuelTruck implements Runnable{
             }
         }
     }
+    
     void refuelPlane(Plane plane) {
         try {
             truck.acquire();
@@ -76,10 +76,10 @@ public class RefuelTruck implements Runnable{
             java.util.logging.Logger.getLogger(RefuelTruck.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        synchronized (QueueList) {
-            QueueList.offer(plane);
-            if (QueueList.size() == 1) {
-                QueueList.notify();
+        synchronized (PlaneQueue) {
+            PlaneQueue.offer(plane);
+            if (PlaneQueue.size() == 1) {
+                PlaneQueue.notify();
             }
         }
     }

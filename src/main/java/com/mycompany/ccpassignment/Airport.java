@@ -16,7 +16,7 @@ public class Airport {
     final Semaphore gates = new Semaphore(3);
     final long startTime = System.currentTimeMillis();
     String name;
-    RefuelTruck RTruck = new RefuelTruck("Refuel Truck");
+    RefuelTruck RefuelTruck = new RefuelTruck("Refuel Truck");
     ATCManager ATC_Mgr;
     CleaningTeam CTeam;
     
@@ -27,7 +27,7 @@ public class Airport {
     }
     
     public void startServices() {
-        new Thread(RTruck).start();
+        new Thread(RefuelTruck).start();
         new Thread(this.ATC_Mgr).start();
         new Thread(CTeam).start();
     }

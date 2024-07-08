@@ -9,7 +9,7 @@ package com.mycompany.ccpassignment;
  * @author FongJunDe
  */
 public class SanityCheck {
-    static int planesHandled = 0;
+    static int planesServed = 0;
     long landingWaitingTime;
     long takeOffWaitingTime;
     int passengersBoarded;

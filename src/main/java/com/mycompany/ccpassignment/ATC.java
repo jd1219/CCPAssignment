@@ -14,30 +14,30 @@ import java.util.logging.Level;
  *
  * @author FongJunDe
  */
-public class AirTrafficControl implements Runnable{
+public class ATC implements Runnable{
     final Queue<Plane> QueueList = new LinkedList<>();
     final BlockingDeque<Plane> tempList = new LinkedBlockingDeque<>();
     private final Airport airport;
     String name;
     
-    public AirTrafficControl(Airport airport, String name) {
+    public ATC(Airport airport, String name) {
         this.airport = airport;
         this.name = name;
     }
     
-    void handleArrival(Plane plane){
-        Logger.log(name, "Checking available gates for " + "Plane " + plane.getId());
+    void planeLanding(Plane plane){
+        Logger.log(name, "Checking available gates for Plane " + plane.getId());
         synchronized (QueueList) {
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
-                java.util.logging.Logger.getLogger(AirTrafficControl.class.getName()).log(Level.SEVERE, null, ex);
+                java.util.logging.Logger.getLogger(ATC.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         
         synchronized (airport.gates) {
             while (airport.gates.availablePermits() == 0) {
-                Logger.log(name, "No available gate, please hover in air " + "Plane " + plane.getId());
+                Logger.log(name, "Gate is not available, please wait until gate is available, Plane " + plane.getId());
                 try {
                     airport.gates.wait();
                 } catch (InterruptedException e) {
@@ -48,13 +48,14 @@ public class AirTrafficControl implements Runnable{
         
         Logger.log(name, "Found available gate for Plane " + plane.getId());
         
+        // check if runway is clear, else let the thread to wait until notify
         synchronized(airport.runway){
             while(airport.runway.isLocked()){
-                Logger.log(name, "Runway is occupied, Plane " + plane.getId()+ " please wait ");
+                Logger.log(name, "Runway is used, Plane " + plane.getId()+ " please wait ");
                 try {
                     airport.runway.wait();
                 } catch (InterruptedException ex) {
-                    java.util.logging.Logger.getLogger(AirTrafficControl.class.getName()).log(Level.SEVERE, null, ex);
+                    java.util.logging.Logger.getLogger(ATC.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }
@@ -62,9 +63,9 @@ public class AirTrafficControl implements Runnable{
         Logger.log(name, "Runway is empty, " + plane.getId() + " please proceed to landing");
         
         // to let the plane continue to landing
-        synchronized(plane.ClearToLand){
-            plane.ClearToLand.set(true);
-            plane.ClearToLand.notifyAll();
+        synchronized(plane.ableToLand){
+            plane.ableToLand.set(true);
+            plane.ableToLand.notifyAll();
         }
         
         //to remove the first plane in the queueList
@@ -74,7 +75,7 @@ public class AirTrafficControl implements Runnable{
         }
     }
     
-    void handleDeparture(Plane plane){
+    void planeDepart(Plane plane){
         Logger.log(name,"Checking availability runway for Plane " + plane.getId() + "......");
         
         synchronized(airport.runway){
@@ -83,16 +84,16 @@ public class AirTrafficControl implements Runnable{
                 try {
                     airport.runway.wait();
                 } catch (InterruptedException ex) {
-                    java.util.logging.Logger.getLogger(AirTrafficControl.class.getName()).log(Level.SEVERE, null, ex);
+                    java.util.logging.Logger.getLogger(ATC.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }
         
         Logger.log(name, "Plane " + plane.getId() + ", runway is available, please proceed to depart!!!");
         
-        synchronized (plane.ClearToDepart) {
-            plane.ClearToDepart.set(true);
-            plane.ClearToDepart.notifyAll();
+        synchronized (plane.ableToDepart) {
+            plane.ableToDepart.set(true);
+            plane.ableToDepart.notifyAll();
         }
 
         synchronized (QueueList) {
@@ -110,7 +111,7 @@ public class AirTrafficControl implements Runnable{
                     try {
                         QueueList.wait();
                     } catch (InterruptedException ex) {
-                        java.util.logging.Logger.getLogger(AirTrafficControl.class.getName()).log(Level.SEVERE, null, ex);
+                        java.util.logging.Logger.getLogger(ATC.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
                 plane = QueueList.peek();
@@ -118,9 +119,9 @@ public class AirTrafficControl implements Runnable{
             }
             
             if(plane.isArriving.get()){
-                handleArrival(plane);
+                planeLanding(plane);
             }else{
-                handleDeparture(plane);
+                planeDepart(plane);
             }
         }
     }

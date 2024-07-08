@@ -11,16 +11,16 @@ import java.util.logging.Level;
  *
  * @author FongJunDe
  */
-public class AirTrafficControlManager implements Runnable{
+public class ATCManager implements Runnable{
     final Airport airport;
-    AirTrafficControl ATC_Arrival;
-    AirTrafficControl ATC_Departure;
+    ATC ATC_Arrival;
+    ATC ATC_Departure;
     ArrayList<SanityCheck> statistics = new ArrayList<>();
     
-    public AirTrafficControlManager(Airport airport){
+    public ATCManager(Airport airport){
         this.airport = airport;
-        this.ATC_Arrival = new AirTrafficControl(airport, "ATC Arrival");
-        this.ATC_Departure = new AirTrafficControl(airport, "ATC Departure");
+        this.ATC_Arrival = new ATC(airport, "ATC Arrival");
+        this.ATC_Departure = new ATC(airport, "ATC Departure");
 
     }
     
@@ -32,12 +32,12 @@ public class AirTrafficControlManager implements Runnable{
     void RequestLanding(Plane plane){
         synchronized (ATC_Arrival.QueueList) {
             //adding a plane into the queue
-                ATC_Arrival.QueueList.offer(plane);
+            ATC_Arrival.QueueList.offer(plane);
             ATC_Arrival.QueueList.notifyAll();
         }
     }
     
-    void planeDeparture(Plane plane) {
+    void RequestDepart(Plane plane) {
         synchronized (ATC_Departure.QueueList) {
             //adding a plane into the queue
             ATC_Departure.QueueList.offer(plane);
@@ -55,11 +55,14 @@ public class AirTrafficControlManager implements Runnable{
             throw new RuntimeException(e);
         }
         
-        while(!ATC_Arrival.QueueList.isEmpty() ||!ATC_Departure.QueueList.isEmpty() || airport.runway.isLocked() || airport.gates.availablePermits() < 3){
+        while(!ATC_Arrival.QueueList.isEmpty() ||
+                !ATC_Departure.QueueList.isEmpty() || 
+                airport.runway.isLocked() || 
+                airport.gates.availablePermits() < 3){
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException ex) {
-                java.util.logging.Logger.getLogger(AirTrafficControlManager.class.getName()).log(Level.SEVERE, null, ex);
+                java.util.logging.Logger.getLogger(ATCManager.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         

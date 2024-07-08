@@ -12,23 +12,23 @@ import java.util.concurrent.locks.ReentrantLock;
 // * @author FongJunDe
 // */
 public class Airport {
-    final Semaphore gates = new Semaphore(3);
     final ReentrantLock runway = new ReentrantLock();
+    final Semaphore gates = new Semaphore(3);
     final long startTime = System.currentTimeMillis();
     String name;
     RefuelTruck RTruck = new RefuelTruck("Refuel Truck");
-    AirTrafficControlManager ATC_Manager;
+    ATCManager ATC_Mgr;
     CleaningTeam CTeam;
     
     public Airport(String name){
         this.name = name;
-        this.ATC_Manager = new AirTrafficControlManager(this);
+        this.ATC_Mgr = new ATCManager(this);
         this.CTeam = new CleaningTeam();
     }
     
     public void startServices() {
         new Thread(RTruck).start();
-        new Thread(this.ATC_Manager).start();
+        new Thread(this.ATC_Mgr).start();
         new Thread(CTeam).start();
     }
     

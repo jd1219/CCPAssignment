@@ -55,6 +55,7 @@ public class RefuelTruck implements Runnable{
                         }
 
                         Logger.log(name, "Refueling for Plane " + plane.getId() + " ... Progress: " + plane.fuelLevel + "%");
+                        Logger.log(name, "Refilling supplies for Plane " + plane.getId() + " ... Progress: " + plane.fuelLevel + "%");
 
                         try {
                             Thread.sleep(300); // Simulate time taken to refuel

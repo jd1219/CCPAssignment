@@ -14,14 +14,15 @@ import java.util.logging.Level;
  */
 public class Plane implements Runnable {
 
-    final AtomicBoolean ClearToLand = new AtomicBoolean(false);
-    final AtomicBoolean ClearToDepart = new AtomicBoolean(false);
+    final AtomicBoolean ableToLand = new AtomicBoolean(false);
+    final AtomicBoolean ableToDepart = new AtomicBoolean(false);
     final AtomicBoolean isArriving = new AtomicBoolean(true);
     Airport airport;
     int numPassenger;
     int maxPassenger;
     int fuelLevel;
     int cleanlinessLevel;
+    int suppliesLevel;
     private int planeid;
     boolean emergency;
 
@@ -32,6 +33,7 @@ public class Plane implements Runnable {
         this.maxPassenger = ThreadLocalRandom.current().nextInt(30, 50);
         this.fuelLevel = ThreadLocalRandom.current().nextInt(25, 75);
         this.cleanlinessLevel = ThreadLocalRandom.current().nextInt(25, 75);
+        this.suppliesLevel = ThreadLocalRandom.current().nextInt(25, 75);
         this.emergency = emergency;
 
     }
@@ -48,8 +50,10 @@ public class Plane implements Runnable {
     public boolean isEmergency() {
         return this.emergency;
     }
-
+    
+    // function that let handle passenger diembark from the plane
     void disembark(Plane plane) {
+        // sample output from passenger
         String[] messages = {
             "I am leaving Plane %d",
             "Nice flight on Plane %d",
@@ -58,6 +62,7 @@ public class Plane implements Runnable {
             "What an experience Plane %d"
         };
         
+        // to let passenger have a different output/comment about the flight
         for (int i = 1; i <= numPassenger; i++) {
             String message = messages[ThreadLocalRandom.current().nextInt(messages.length)];
             Logger.log("Passenger " + i, String.format(message, getId()));
@@ -74,8 +79,10 @@ public class Plane implements Runnable {
             java.util.logging.Logger.getLogger(Plane.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
+    // function that handle passenger boarding plane
     void embark(Plane plane) {
+        // sample output from passenger
         String[] messages = {
             "I am boarding Plane %d",
             "Hope its a nice flight on Plane %d",
@@ -83,6 +90,8 @@ public class Plane implements Runnable {
             "Boarding Plane %d now",
             "Finally you here, Plane %d"
         };
+        
+        // to let passenger have a different output/comment about the flight
         for (int i = 1; i <= maxPassenger; i++) {
             String message = messages[ThreadLocalRandom.current().nextInt(messages.length)];
             Logger.log("Passenger " + i, String.format(message, getId()));
@@ -108,16 +117,16 @@ public class Plane implements Runnable {
             Logger.log("Plane " + this.planeid, "Request to Land");
         }
 
-        airport.ATC_Manager.RequestLanding(this);
+        airport.ATC_Mgr.RequestLanding(this);
 
         // start to record the waiting time of plane to landing
         long landingWaitTimeStart = System.currentTimeMillis();
 
-        synchronized (ClearToLand) {
-            if (!ClearToLand.get()) {
+        synchronized (ableToLand) {
+            if (!ableToLand.get()) {
                 Logger.log("Plane " + this.planeid, "Awaiting permission to land.");
                 try {
-                    ClearToLand.wait();
+                    ableToLand.wait();
                 } catch (InterruptedException ex) {
                     java.util.logging.Logger.getLogger(Plane.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -158,14 +167,14 @@ public class Plane implements Runnable {
             airport.runway.notifyAll();
         }
 
-//        Logger.log("Plane " + this.planeid, "Heading to gates......");
+        Logger.log("Plane " + this.planeid, "Heading to gates......");
         try {
             Thread.sleep(800);
         } catch (InterruptedException ex) {
             java.util.logging.Logger.getLogger(Plane.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-//        Logger.log("Plane " + this.planeid, "Docking now.....");
+        Logger.log("Plane " + this.planeid, "Docking now.....");
         try {
             Thread.sleep(800);
         } catch (InterruptedException ex) {
@@ -182,11 +191,11 @@ public class Plane implements Runnable {
         //refuel, cleaning, disembark and embark the passengers
         airport.RTruck.refuelPlane(this);
         airport.CTeam.planeCleaning(this);
-        disembark(this);
-        embark(this);
+//        disembark(this);
+//        embark(this);
 
         while (cleanlinessLevel < 100) {
-            Logger.log("Plane " + this.planeid, "Plane not cleaned yet, waiting on CLEANING......");
+            Logger.log("Plane " + this.planeid, "Plane not cleaned yet, waiting on cleaning......");
             try {
                 Thread.sleep(800);
             } catch (InterruptedException e) {
@@ -195,7 +204,7 @@ public class Plane implements Runnable {
         }
 
         while (fuelLevel < 100) {
-            Logger.log("Plane " + this.planeid, "Plane not refueled yet, waiting on REFUELLING......");
+            Logger.log("Plane " + this.planeid, "Plane not refueled yet, waiting on refuel......");
             try {
                 Thread.sleep(800);
             } catch (InterruptedException e) {
@@ -203,7 +212,7 @@ public class Plane implements Runnable {
             }
         }
 
-//        Logger.log("Plane " + this.planeid, "Refueled and Cleaned, ready to undock......");
+        Logger.log("Plane " + this.planeid, "Refueled and Cleaned, ready to undock......");
 
         // record the time that plane on land
         long dockTime = System.currentTimeMillis() - dockTimeStart;
@@ -213,13 +222,13 @@ public class Plane implements Runnable {
 
         this.isArriving.set(false);
 
-        airport.ATC_Manager.planeDeparture(this);
+        airport.ATC_Mgr.RequestDepart(this);
 
         // check if the runway is clear
-        synchronized (ClearToDepart) {
-            if (!ClearToDepart.get()) {
+        synchronized (ableToDepart) {
+            if (!ableToDepart.get()) {
                 try {
-                    ClearToDepart.wait();
+                    ableToDepart.wait();
                 } catch (InterruptedException ex) {
                     java.util.logging.Logger.getLogger(Plane.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -229,21 +238,21 @@ public class Plane implements Runnable {
         //to let the runway be lock and other plane cannot access
         airport.runway.lock();
 
-//        Logger.log("Plane " + this.planeid, "Depart confirmed, ready to undock now......");
+        Logger.log("Plane " + this.planeid, "Depart confirmed, ready to undock now......");
         try {
             Thread.sleep(800);
         } catch (InterruptedException ex) {
             java.util.logging.Logger.getLogger(Plane.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-//        Logger.log("Plane " + this.planeid, "Heading towards runway......");
+        Logger.log("Plane " + this.planeid, "Heading towards runway......");
         try {
             Thread.sleep(800);
         } catch (InterruptedException ex) {
             java.util.logging.Logger.getLogger(Plane.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-//        Logger.log("Plane " + this.planeid, "Ready to take off......");
+        Logger.log("Plane " + this.planeid, "Ready to take off......");
         try {
             Thread.sleep(800);
         } catch (InterruptedException ex) {
@@ -274,8 +283,8 @@ public class Plane implements Runnable {
 
         // create sanityCheck object and add it into the statistics array
         SanityCheck stats = new SanityCheck(landingWaitTime, dockTime, takeOffWaitingTime, maxPassenger, this);
-        airport.ATC_Manager.statistics.add(stats);
-        SanityCheck.planesHandled++;
+        airport.ATC_Mgr.statistics.add(stats);
+        SanityCheck.planesServed++;
 
     }
 }
